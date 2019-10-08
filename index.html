@@ -1,65 +1,174 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <title>Travel Photo Library</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.css' rel='stylesheet' />
   <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <title>GPS Photo Library</title>
-</head>
-
-<body>
   <!--Add geocoder-->
   <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.3.0/mapbox-gl-geocoder.min.js'></script>
   <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.3.0/mapbox-gl-geocoder.css' type='text/css' />
+  <style>
+    html * {
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+        }
 
-  <!-- Nav bar -->
-  <nav class="navbar navbar-dark" style="background-color: #002f5d;">
-    <a class="navbar-brand" href="#">
-      <img src="https://gis.boplass.govt.nz/images/logos/boprc.png" alt="BOPRC">
-      GPS Photo Gallery
-    </a>
-    <ul class="nav navbar-nav navbar-right">
-      <button class="btn btn-outline-success my-2 my-sm-0" data-toggle="modal" data-target="#infoModal">How it works</button>
-    </ul>
+    body { margin:0; padding:0; }
 
-    <!-- Modal -->
-    <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="infoModalLabel">How to see your photos on this map</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>This map shows the GPS photos saved in Objective.</p>
-            <ol>
-              <li>Make sure your photos have Latitude and Longitude information in the properties.</li>
-              <li>Upload your photos to this <a href="objective://id:fA1147255@objective.envbop.net" target="_blank">Objective Folder</a>.</li>
-              <li>Objective will pick up the photos around 12:30pm every day. </li>
-              <li>You should be able to see your photos on this map after lunch time.</li>
-            </ol>
-          </div>
+    #map { position:absolute; top:0; bottom:0; width:100%; }
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    .mapboxgl-popup {
+      max-width: 400px;
+      font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
 
-  </nav>
+<body>
   <div id='map'></div>
+  <script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoibHV2MnUyMDIwIiwiYSI6Ik1xdVpzT2MifQ.-ztdqdV1GdtBuVwaQjyfyQ';
+  var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v10',
+      center: [176.8, -38.0],
+      zoom: 9
+  });
 
+  map.on('load', function() {
+      // Add a new source from our GeoJSON data and set the
+      // 'cluster' option to true. GL-JS will add the point_count property to your source data.
+      map.addSource("photos", {
+          type: "geojson",
+          // Point to GeoJSON data.
+
+          data: "data/photos.geojson",
+          cluster: true,
+          clusterMaxZoom: 14, // Max zoom to cluster points on
+          clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+      });
+
+      map.addLayer({
+          id: "clusters",
+          type: "circle",
+          source: "photos",
+          filter: ["has", "point_count"],
+          paint: {
+              // Use step expressions (https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-step)
+              // with three steps to implement three types of circles:
+              //   * black, 20px circles when point count is less than 10
+              //   * orange, 30px circles when point count is between 10 and 20
+              //   * dark red, 40px circles when point count is greater than or equal to 20
+              "circle-color": [
+                  "step",
+                  ["get", "point_count"],
+                  "#272838",
+                  10,
+                  "#CC9751",
+                  20,
+                  "#8E443D"
+              ],
+              "circle-radius": [
+                  "step",
+                  ["get", "point_count"],
+                  20,
+                  10,
+                  30,
+                  20,
+                  40
+              ]
+          }
+      });
+
+      map.addLayer({
+          id: "cluster-count",
+          type: "symbol",
+          source: "photos",
+          filter: ["has", "point_count"],
+          layout: {
+              "text-field": "{point_count_abbreviated}",
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              "text-size": 20
+          },
+          paint: {
+              "text-color": "#fcf7f7"
+          }
+      });
+
+      map.addLayer({
+          id: "unclustered-point",
+          type: "circle",
+          source: "photos",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+              "circle-color": "#525151",
+              "circle-radius": 7,
+              "circle-stroke-width": 1.2,
+              "circle-stroke-color": "#fff"
+          }
+      });
+
+      // Click on a cluster
+      map.on('click', 'clusters', function (e) {
+          var features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+          var clusterId = features[0].properties.cluster_id;
+          map.getSource('photos').getClusterExpansionZoom(clusterId, function (err, zoom) {
+              if (err)
+                  return;
+
+              map.easeTo({
+                  center: features[0].geometry.coordinates,
+                  zoom: zoom
+              });
+          });
+      });
+
+  // Click on a point
+  //When a click event occurs on a feature (id=unclustered-point) in the places layer, open a popup at the
+  // location of the feature, with description HTML from its properties.
+  map.on('click', 'unclustered-point', function (e) {
+  var coordinates = e.features[0].geometry.coordinates.slice();
+  var description = "<strong>"+e.features[0].properties.name +"</strong>"+
+                    "<br>Open Objective Photo Below:" +
+                    "<br><a href=\""+ e.features[0].properties.url+ "\" target=\"_blank\" title=\"Opens in a new window\">" + "<img src=\"" +e.features[0].properties.url+ "\" width=\”220\” height=\"110\"/>" + "</a>" +
+                    "<br><strong>Date taken: </strong>"+e.features[0].properties.fileCreatedDate +
+                    "<br><strong>Uploaded by: </strong>"+e.features[0].properties.owner
+
+  // Ensure that if the map is zoomed out such that multiple
+  // copies of the feature are visible, the popup appears
+  // over the copy being pointed to.
+  while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+  coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+  }
+
+  new mapboxgl.Popup()
+  .setLngLat(coordinates)
+  .setHTML(description)
+  .addTo(map);
+  });
+
+  //Control mouse movement
+  map.on('mouseenter', 'clusters', function () {
+    map.getCanvas().style.cursor = 'pointer';
+      });
+  map.on('mouseleave', 'clusters', function () {
+    map.getCanvas().style.cursor = '';
+      });
+
+  map.on('mouseenter', 'unclustered-point', function () {
+    map.getCanvas().style.cursor = 'pointer';
+      });
+  map.on('mouseleave', 'unclustered-point', function () {
+    map.getCanvas().style.cursor = '';
+      });
+  });
+
+  //Add geocoder
+  map.addControl(new MapboxGeocoder({
+  accessToken: mapboxgl.accessToken,
+  mapboxgl: mapboxgl
+  }));
+  </script>
 </body>
-
-<script  src="js/photos.js"></script>
 </html>
