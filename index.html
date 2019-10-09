@@ -32,8 +32,8 @@
   var map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v10',
-      center: [176.8, -38.0],
-      zoom: 9
+      center: [99.75, 13.5],
+      zoom: 2
   });
 
   map.on('load', function() {
@@ -129,11 +129,11 @@
   // location of the feature, with description HTML from its properties.
   map.on('click', 'unclustered-point', function (e) {
   var coordinates = e.features[0].geometry.coordinates.slice();
-  var description = "<strong>"+e.features[0].properties.name +"</strong>"+
-                    "<br>Open Objective Photo Below:" +
-                    "<br><a href=\""+ e.features[0].properties.url+ "\" target=\"_blank\" title=\"Opens in a new window\">" + "<img src=\"" +e.features[0].properties.url+ "\" width=\”220\” height=\"110\"/>" + "</a>" +
-                    "<br><strong>Date taken: </strong>"+e.features[0].properties.fileCreatedDate +
-                    "<br><strong>Uploaded by: </strong>"+e.features[0].properties.owner
+  var description = "<strong>"+e.features[0].properties.location + ", "+ e.features[0].properties.country +"</strong>"+
+                    "<hr>" +
+                    "<br><a href=\""+ e.features[0].properties.path+ "\" target=\"_blank\" title=\"Opens in a new window\">" + "<img src=\"" +e.features[0].properties.path+ "\" width=\”220\” height=\"110\"/>" + "</a>" +
+                    "<br><strong>Date taken: </strong>"+e.features[0].properties.date
+
 
   // Ensure that if the map is zoomed out such that multiple
   // copies of the feature are visible, the popup appears
