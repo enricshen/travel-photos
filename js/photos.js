@@ -2,8 +2,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZW5yaWNzaGVuIiwiYSI6ImNrdmluMzh2cjBkaGYyb3Brb
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v10',
-    center: [176.8, -38.0],
-    zoom: 9
+    center: [130.5, 18.5],
+      zoom: 1.84
 });
 
 map.on('load', function() {
@@ -15,7 +15,7 @@ map.on('load', function() {
 
         data: "https://raw.githubusercontent.com/enricshen/travel-photos/master/data/photos.geojson",
         cluster: true,
-        clusterMaxZoom: 14, // Max zoom to cluster points on
+        clusterMaxZoom: 8, // Max zoom to cluster points on
         clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
     });
 
